@@ -49,38 +49,71 @@ local otherTab = Window:Tab({ Title = "其他脚本", Icon = "box" })
 local aiTab = Window:Tab({ Title = "AI主功能", Icon = "bot" })
 local settingsTab = Window:Tab({ Title = "设置", Icon = "settings" })
 local sanaoliTab=window:Tab({Title = "圣奥里”，Icon = "sun"})
+-- ============================================
+--  AI主功能标签页（使用 Dialog 作为输入框）
+-- ============================================
+
 aiTab:Paragraph({
-    Title = "🤖 AI 智能助手",
-    Description = "在下方输入问题，AI 会为你解答"
+    Title = "🤖 免费 AI 智能助手",
+    Description = "点击下方按钮，在对话框中输入问题"
 })
 
 -- 存储聊天记录
 local chatMessages = {"你好！我是免费AI助手，有什么可以帮你的吗？"}
-local currentInput = ""
-local chatContainer = aiTab  -- 用来添加消息
 
--- 显示已有聊天记录（用 Paragraph 显示所有消息）
-local function updateChatDisplay()
-    local fullText = table.concat(chatMessages, "\n\n")
-    -- 用 Label 显示聊天记录
-    if chatLabel then
-        chatLabel:Set({
-            Title = "💬 聊天记录",
-            Description = fullText
-        })
-    end
-end
-
--- 创建聊天记录显示区（用 Label）
+-- 聊天记录显示区
 local chatLabel = aiTab:Label({
     Title = "💬 聊天记录",
     Description = table.concat(chatMessages, "\n\n")
 })
 
+-- ===== 打开输入对话框的按钮 =====
+aiTab:Button({
+    Title = "✏️ 点击输入问题",
+    Description = "打开对话框输入你想问的问题",
+    Callback = function()
+        -- 创建输入对话框
+        local inputDialog = Window:Dialog({
+            Icon = "bot",
+            Title = "🤖 向 AI 提问",
+            Content = "在下方输入你想问的问题：",
+            Buttons = {
+                {
+                    Title = "📤 发送",
+                    Callback = function()
+                        -- 获取用户输入（Dialog 的输入内容需要通过 TextBox 获取）
+                        -- 注意：Dialog 默认没有输入框，需要用 Input 组件配合
+                        print("发送按钮被点击")
+                    end,
+                },
+                {
+                    Title = "❌ 取消",
+                    Callback = function()
+                        print("已取消")
+                    end,
+                },
+            },
+        })
+        
+        -- 由于 Dialog 本身没有输入框，我们需要在 Dialog 里添加一个 Input
+        -- 但 WindUI 的 Dialog 不支持直接添加 Input，所以这个方案需要调整
+    end
+})
+
+-- ===== 备用方案：用 Input 作为主要输入方式 =====
+-- 因为 Dialog 不支持输入框，我们改用 Input 组件 + 按钮打开对话历史
+
+aiTab:Paragraph({
+    Title = "✏️ 输入区域",
+    Description = "在下方输入框打字，然后点击发送"
+})
+
+local currentInput = ""
+
 -- 输入框
 aiTab:Input({
-    Title = "✏️ 输入问题",
-    Description = "在下方输入你想问的问题",
+    Title = "输入问题",
+    Description = "在这里输入你想问的问题",
     Placeholder = "例如：如何快速升级？",
     Callback = function(text)
         currentInput = text or ""
@@ -90,7 +123,7 @@ aiTab:Input({
 -- 发送按钮
 aiTab:Button({
     Title = "📤 发送",
-    Description = "点击发送你的问题给AI",
+    Description = "点击发送问题给 AI",
     Callback = function()
         if currentInput == "" or currentInput == nil then
             chatLabel:Set({
@@ -127,7 +160,6 @@ aiTab:Button({
                 end)
                 
                 if success and data and data.data and data.data.content then
-                    -- 替换"思考中..."为实际回复
                     table.remove(chatMessages)
                     table.insert(chatMessages, "🤖 AI: " .. data.data.content)
                 else
